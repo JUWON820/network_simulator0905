@@ -1,0 +1,36 @@
+<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>컴퓨터 네트워크 혼잡 시뮬레이션</title>
+<style>
+body{font-family:Arial,"Malgun Gothic",sans-serif;background:#f4f7fb;color:#1f2937;margin:0}.wrap{max-width:1050px;margin:auto;padding:28px 18px}
+h1{margin-bottom:6px}.sub{color:#64748b}.grid{display:grid;grid-template-columns:300px 1fr;gap:18px}.card{background:white;border:1px solid #dbe3ee;border-radius:14px;padding:20px;box-shadow:0 3px 12px #0000000d}
+h2{font-size:18px;margin-top:0}.control{margin:20px 0}.control label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px}input{width:100%}
+button{width:100%;padding:12px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px}
+.stat{background:#f8fafc;border-radius:10px;padding:13px;text-align:center}.value{font-size:25px;font-weight:bold;margin:5px}.status{text-align:center;font-weight:bold;margin-top:15px;padding:13px;border-radius:9px;background:#eef2ff}
+canvas{width:100%;height:330px;border:1px solid #e2e8f0;border-radius:9px}.note{font-size:13px;color:#64748b;line-height:1.6}
+@media(max-width:750px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+</style></head><body><div class="wrap">
+<h1>컴퓨터 네트워크 혼잡 시뮬레이션</h1><p class="sub">접속 기기 수와 데이터 요청량에 따라 네트워크 혼잡과 지연 시간이 어떻게 변하는지 관찰합니다.</p>
+<div class="grid"><div class="card"><h2>① 시뮬레이션 조건</h2>
+<div class="control"><label>동시 접속 기기 수 <span id="dv"></span></label><input id="d" type="range" min="10" max="200" value="50"></div>
+<div class="control"><label>기기당 요청 빈도 <span id="rv"></span></label><input id="r" type="range" min="1" max="10" value="2"></div>
+<div class="control"><label>서버 처리 능력 <span id="sv"></span></label><input id="s" type="range" min="20" max="200" value="100"></div>
+<div class="control"><label>네트워크 대역폭 <span id="bv"></span></label><input id="b" type="range" min="20" max="200" value="100"></div>
+<button onclick="run()">시뮬레이션 실행</button>
+<p class="note">내부 요인: 서버 처리 능력, 네트워크 대역폭<br>외부 요인: 동시 접속 기기 수, 기기당 요청 빈도</p></div>
+<div class="card"><h2>② 시뮬레이션 결과</h2><canvas id="chart" width="700" height="330"></canvas>
+<div class="stats"><div class="stat">요청량<div class="value" id="load">-</div>건/초</div><div class="stat">평균 지연<div class="value" id="delay">-</div>ms</div><div class="stat">대기 데이터<div class="value" id="queue">-</div>건</div></div>
+<div class="status" id="status">조건을 설정하고 실행해 보세요.</div></div></div>
+<div class="card" style="margin-top:18px"><h2>③ 탐구 질문</h2><ol><li>동시 접속 기기 수가 증가하면 지연 시간은 어떻게 변하는가?</li><li>서버 처리 능력을 높이면 혼잡은 어떻게 달라지는가?</li><li>네트워크 대역폭이 부족하면 어떤 현상이 나타나는가?</li><li>실제 인터넷에서는 어떤 요소가 추가로 영향을 줄 수 있는가?</li></ol></div>
+</div>
+<script>
+const ids=['d','r','s','b'];function labels(){dv.textContent=d.value+'대';rv.textContent=r.value+'회/초';sv.textContent=s.value+'건/초';bv.textContent=b.value+'단위'}ids.forEach(x=>document.getElementById(x).oninput=labels);
+function run(){let D=+d.value,R=+r.value,S=+s.value,B=+b.value,L=D*R,C=Math.min(S,B),q=L/C,delay,queue,msg;
+if(q<=.7){delay=30+q*35;queue=L*.03;msg='🟢 원활: 네트워크가 비교적 안정적으로 처리됩니다.'}
+else if(q<=1){delay=55+(q-.7)*250;queue=L*(q-.7)*.7;msg='🟡 주의: 처리 능력에 가까워져 지연이 증가합니다.'}
+else{delay=130+(q-1)*420;queue=(L-C)*1.8+L*.08;msg='🔴 혼잡: 요청량이 처리 능력을 초과하여 대기 데이터가 증가합니다.'}
+load.textContent=L;document.getElementById('delay').textContent=Math.round(delay);document.getElementById('queue').textContent=Math.round(queue);status.textContent=msg;draw(L,C)}
+function draw(L,C){let c=chart,x=c.getContext('2d'),W=c.width,H=c.height;x.clearRect(0,0,W,H);let max=Math.max(L,C,200)*1.15,p=45;
+x.strokeStyle='#dbe3ee';for(let i=0;i<=5;i++){let y=H-40-(H-65)*i/5;x.beginPath();x.moveTo(p,y);x.lineTo(W-15,y);x.stroke();x.fillStyle='#64748b';x.font='12px Arial';x.fillText(Math.round(max*i/5),8,y+4)}
+[{n:'현재 요청량',v:L},{n:'처리 가능량',v:C}].forEach((a,i)=>{let w=120,g=80,xx=W/2-w-g/2+i*(w+g),h=(H-65)*a.v/max,yy=H-40-h;x.fillStyle=i?'#94a3b8':'#2563eb';x.fillRect(xx,yy,w,h);x.fillStyle='#1f2937';x.textAlign='center';x.font='bold 14px Arial';x.fillText(Math.round(a.v),xx+w/2,yy-8);x.font='13px Arial';x.fillText(a.n,xx+w/2,H-18)});x.textAlign='start'}
+labels();run();
+</script></body></html>
